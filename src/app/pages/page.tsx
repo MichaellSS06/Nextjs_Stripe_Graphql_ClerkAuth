@@ -16,7 +16,7 @@ const USER_FRAGMENT = gql`
 `;
 
 const GET_FEED = gql`
-  query {
+  query Query{
     feed {
       id
       title
@@ -30,13 +30,32 @@ const GET_FEED = gql`
 `;
 
 const ADD_USER = gql`
-  mutation AddUser($name: String!, $email: String!, $role: Role!) {
+  mutation Mutation($name: String!, $email: String!, $role: Role!) {
     addUser(name: $name, email: $email, role: $role) {
       ...UserFields
     }
   }
   ${USER_FRAGMENT}
 `;
+
+const UPDATE_POST = gql`
+  mutation Mutation($title: String, $content: String, $updatePostId: ID!) {
+    updatePost(title: $title, content: $content, id: $updatePostId) {
+      id
+      title
+      content
+      author {
+        ...UserFields
+      }
+    }
+  }
+  ${USER_FRAGMENT}
+`;
+
+const DELETE_POST = gql`
+  mutation Mutation($deletePostId: ID!) {
+    deletePost(id: $deletePostId)
+}`;
 
 function Feed() {
   const { data, loading } = useQuery<FeedData>(GET_FEED);
@@ -66,6 +85,26 @@ function AddUserForm() {
   return <button onClick={handleClick} className="bg-blue-500 text-white p-2">Añadir Usuario</button>;
 }
 
+function UpdatePost() {
+  const [updatePost] = useMutation(UPDATE_POST);
+
+  const handleClick = () => {
+    updatePost({ variables: { title: "front",content: "test desde front",updatePostId: "103" } });
+  };
+
+  return <button onClick={handleClick} className="bg-blue-500 text-white p-2">Update Post</button>;
+}
+
+function DeletePost() {
+  const [deletePost] = useMutation(DELETE_POST);
+
+  const handleClick = () => {
+    deletePost({ variables: { "deletePostId": "103" } });
+  };
+
+  return <button onClick={handleClick} className="bg-blue-500 text-white p-2">Delete Post</button>;
+}
+
 export default function HomePage() {
   const [msg, setMsg] = useState("");
 
@@ -82,6 +121,8 @@ export default function HomePage() {
         <h1 className="text-2xl font-bold">Next.js + GraphQL Completo</h1>
         <AddUserForm />
         <Feed />
+        <UpdatePost /><br/>
+        <DeletePost />
       </ApolloProvider>
     </div>
   )

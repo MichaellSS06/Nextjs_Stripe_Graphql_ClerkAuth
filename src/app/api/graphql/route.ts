@@ -1,8 +1,11 @@
 import { ApolloServer } from "@apollo/server";
+// import { WebSocketServer } from "ws";
+// import { useServer }from "graphql-ws/use/ws";
+// import http from "http";
 import { startServerAndCreateNextHandler } from "@as-integrations/next";
 import { PubSub } from "graphql-subscriptions";
-import { User }  from "../../../types/graphql"
-
+import { User }  from "../../../types/graphql";
+import { makeExecutableSchema } from "@graphql-tools/schema";
 // --- PubSub en memoria para simular suscripciones
 type Message = {
   id: string;
@@ -30,6 +33,7 @@ const typeDefs = `#graphql
     name: String!
     email: String!
     role: Role!
+    posts: [Post!]! 
   }
 
   type Post {
@@ -59,6 +63,8 @@ const typeDefs = `#graphql
   type Mutation {
     addUser(name: String!, email: String!, role: Role!): User!
     addPost(title: String!, content: String!, authorId: ID!): Post!
+    updatePost(id: ID!, title: String, content: String): Post!  
+    deletePost(id: ID!): Boolean!  
     sendMessage(text: String!, userId: ID!): Message!
   }
 
@@ -69,15 +75,16 @@ const typeDefs = `#graphql
 
 // --- Mock DB (como PostgreSQL)
 const usersDB = [
-  { id: "1", name: "Michaell", email: "micha@test.com", role: "ADMIN" },
-  { id: "2", name: "Ana", email: "ana@test.com", role: "USER" },
+  { id: "1", name: "Michaell", email: "micha@test.com", role: "ADMIN", postsIds: ["101"] },
+  { id: "2", name: "Ana", email: "ana@test.com", role: "USER", postsIds: ["102"] },
 ];
 
 // --- Mock REST API (posts)
-const postsAPI = [
+let postsAPI = [
   { id: "101", title: "Primer post", content: "Hola mundo", authorId: "1" },
   { id: "102", title: "Segundo post", content: "Next.js + GraphQL", authorId: "2" },
 ];
+
 
 // --- Mock messages para suscripciones
 let messages: any[] = [];
@@ -100,21 +107,56 @@ const resolvers = {
 
   Mutation: {
     addUser: (_: any, { name, email, role }: any) => {
-      const newUser = { id: String(usersDB.length + 1), name, email, role };
+      const newUser = { id: String(usersDB.length + 1), name, email, role, postsIds: [] };
       usersDB.push(newUser);
       return newUser;
     },
+    
     addPost: (_: any, { title, content, authorId }: any) => {
       const newPost = { id: String(postsAPI.length + 101), title, content, authorId };
       postsAPI.push(newPost);
-      return { ...newPost, author: usersDB.find((u) => u.id === authorId) };
+      // Asociamos el post al user
+      const user = usersDB.find((u) => u.id === authorId);
+      if (user) {
+        user.postsIds.push(newPost.id);
+      }
+
+      return { ...newPost, author: user };
+    },
+
+    updatePost: (_: any, { id, title, content }: any) => {
+      const post = postsAPI.find((p) => p.id === id);
+      if (!post) throw new Error("Post no encontrado");
+
+      if (title !== undefined) post.title = title;
+      if (content !== undefined) post.content = content;
+
+      return { ...post, author: usersDB.find((u) => u.id === post.authorId) };
+    },
+
+    deletePost: (_: any, { id }: any) => {
+      const index = postsAPI.findIndex((p) => p.id === id);
+      if (index === -1) return false;
+
+      const [deletedPost] = postsAPI.splice(index, 1);
+
+      // Removemos del user
+      const user = usersDB.find((u) => u.id === deletedPost.authorId);
+      if (user) {
+        user.postsIds = user.postsIds.filter((pid: string) => pid !== id);
+      }
+
+      return true;
     },
     sendMessage: (_: any, { text, userId }: any) => {
       const user = usersDB.find((u) => u.id === userId);
       if (!user) {throw new Error("Usuario no encontrado");}
+
       const newMessage = { id: String(messages.length + 1), text, user };
       messages.push(newMessage);
+
       pubsub.publish(MESSAGE_ADDED, { messageAdded: newMessage });
+
       return newMessage;
     },
   },
@@ -127,17 +169,29 @@ const resolvers = {
       resolve: (payload: { messageAdded: Message }) => payload.messageAdded,
     },
   },
+
+  User: {
+    posts: (parent: any) => {
+      return parent.postsIds.map((pid: string) => {
+        const post = postsAPI.find((p) => p.id === pid);
+        return { ...post, author: parent };
+      });
+    },
+  },
 };
 
-// --- Apollo Server
+// 1. Crear el schema ejecutable
+const schema = makeExecutableSchema({ typeDefs, resolvers });
+
+// 2. Crear Apollo Server con el schema
 const server = new ApolloServer({
   typeDefs,
-  resolvers,
+  resolvers
 });
 
 // // --- Export handlers para Next.js (GET/POST)
 // export const { GET, POST } = startServerAndCreateNextHandler(server);
-
+// 3. Handlers para Next.js
 const handler = startServerAndCreateNextHandler(server);
 
 // Next.js App Router necesita exportar funciones GET/POST:
@@ -148,3 +202,22 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   return handler(request);
 }
+
+
+// server.ts
+// const dev = process.env.NODE_ENV !== "production";
+// const app = next({ dev });
+// const handle = app.getRequestHandler();
+
+// app.prepare().then(() => {
+//   const server = http.createServer((req, res) => handle(req, res));
+
+//   // WebSocket para GraphQL Subscriptions
+//   const wsServer = new WebSocketServer({ server, path: "/graphql/subscriptions" });
+//   useServer({ schema }, wsServer);
+
+//   server.listen(4000, () => {
+//     console.log("🚀 Next.js en http://localhost:4000");
+//     console.log("📡 WS listo en ws://localhost:4000/graphql/subscriptions");
+//   });
+// });
