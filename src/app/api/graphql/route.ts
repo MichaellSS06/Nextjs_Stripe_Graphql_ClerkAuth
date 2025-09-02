@@ -33,7 +33,7 @@ const typeDefs = `#graphql
     name: String!
     email: String!
     role: Role!
-    posts: [Post!]! 
+    posts: [PostWithoutUser!]! 
   }
 
   type Post {
@@ -41,6 +41,12 @@ const typeDefs = `#graphql
     title: String!
     content: String!
     author: User!
+  }
+  
+  type PostWithoutUser {
+    id: ID!
+    title: String!
+    content: String!
   }
 
   type Message {
@@ -202,6 +208,26 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   return handler(request);
 }
+
+
+// server.ts
+// const dev = process.env.NODE_ENV !== "production";
+// const app = next({ dev });
+// const handle = app.getRequestHandler();
+
+// app.prepare().then(() => {
+//   const server = http.createServer((req, res) => handle(req, res));
+
+//   // WebSocket para GraphQL Subscriptions
+//   const wsServer = new WebSocketServer({ server, path: "/graphql/subscriptions" });
+//   useServer({ schema }, wsServer);
+
+//   server.listen(4000, () => {
+//     console.log("🚀 Next.js en http://localhost:4000");
+//     console.log("📡 WS listo en ws://localhost:4000/graphql/subscriptions");
+//   });
+// });
+
 
 
 // server.ts

@@ -12,6 +12,11 @@ const USER_FRAGMENT = gql`
     name
     email
     role
+    posts {
+      id
+      title
+      content
+    }
   }
 `;
 
@@ -60,7 +65,7 @@ const DELETE_POST = gql`
 function Feed() {
   const { data, loading } = useQuery<FeedData>(GET_FEED);
   if (loading) return <p>Cargando...</p>;
-
+  // console.log(data?.feed[0].author.posts[0].title)
   return (
     <div>
       <h2 className="font-bold text-xl">Feed de Posts</h2>
@@ -68,7 +73,7 @@ function Feed() {
         <div key={p.id} className="border p-2 m-2 rounded">
           <h3>{p.title}</h3>
           <p>{p.content}</p>
-          <small>By {p.author.name} ({p.author.role})</small>
+          <small>By {p.author.name} ({p.author.role}) + {p.author.posts[0].title}</small>
         </div>
       ))}
     </div>

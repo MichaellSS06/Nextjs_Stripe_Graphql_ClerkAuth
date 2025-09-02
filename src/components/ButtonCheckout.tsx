@@ -1,6 +1,10 @@
 "use client";
 
-function ButtonCheckout({ priceId }) {
+type ButtonCheckoutProps = {
+  priceId: string;
+};
+
+function ButtonCheckout({ priceId }:ButtonCheckoutProps) {
   return (
     <button
       className="bg-sky-500 text-white px-4 py-2 rounded"

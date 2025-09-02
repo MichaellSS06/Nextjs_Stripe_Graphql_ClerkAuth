@@ -2,10 +2,10 @@ import { Stripe } from "stripe";
 import ButtonCheckout from "@/components/ButtonCheckout";
 
 async function loadPrices() {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
   const prices = await stripe.prices.list();
   const sortedPrices = prices.data.sort(
-    (a, b) => a.unit_amount - b.unit_amount
+    (a, b) => (a.unit_amount ?? 0) - (b.unit_amount ?? 0)
   );
   return sortedPrices;
 }
@@ -25,7 +25,7 @@ async function PricingPage() {
           {prices.map((price) => (
             <div key={price.id} className="bg-slate-300 mb-2 p-7">
               <h3>{price.nickname}</h3>
-              <h2 className="text-3xl font-bold">{price.unit_amount / 100}$</h2>
+              <h2 className="text-3xl font-bold">{price.unit_amount as number / 100}$</h2>
               <ButtonCheckout priceId={price.id} />
             </div>
           ))}

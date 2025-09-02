@@ -1,6 +1,6 @@
 function SucessPage() {
   return (
-    <div>SucessPage</div>
+    <div className="mt-100">SucessPage</div>
   )
 }
 
