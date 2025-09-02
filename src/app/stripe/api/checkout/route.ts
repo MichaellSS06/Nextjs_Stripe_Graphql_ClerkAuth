@@ -15,8 +15,8 @@ export async function POST(request: NextRequest) {
         quantity: 1,
       },
     ],
-    success_url: "http://localhost:3000/success",
-    cancel_url: "http://localhost:3000/pricing",
+    success_url: "http://localhost:3000/stripe/success",
+    cancel_url: "http://localhost:3000/stripe/pricing",
   });
 
   return NextResponse.json({

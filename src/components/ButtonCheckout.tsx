@@ -9,7 +9,7 @@ function ButtonCheckout({ priceId }:ButtonCheckoutProps) {
     <button
       className="bg-sky-500 text-white px-4 py-2 rounded"
       onClick={async () => {
-        const res = await fetch('/api/checkout', {
+        const res = await fetch('/stripe/api/checkout', {
             method: 'POST',
             body: JSON.stringify({
                 priceId
