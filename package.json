@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint"
@@ -12,11 +12,13 @@
     "@apollo/client": "^4.0.3",
     "@apollo/server": "^5.0.0",
     "@as-integrations/next": "^4.0.0",
+    "@graphql-tools/schema": "^10.0.25",
     "graphql": "^16.11.0",
     "graphql-subscriptions": "^3.0.0",
     "next": "15.5.2",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "stripe": "^18.5.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
