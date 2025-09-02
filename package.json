@@ -12,6 +12,7 @@
     "@apollo/client": "^4.0.3",
     "@apollo/server": "^5.0.0",
     "@as-integrations/next": "^4.0.0",
+    "@clerk/nextjs": "^6.31.8",
     "@graphql-tools/schema": "^10.0.25",
     "graphql": "^16.11.0",
     "graphql-subscriptions": "^3.0.0",
